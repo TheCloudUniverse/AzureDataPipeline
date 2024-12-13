@@ -1,0 +1,35 @@
+#Working code to remove duplicates
+
+service_credential = dbutils.secrets.get(scope="databricks1",key="kvappsecret")
+tenantid = dbutils.secrets.get(scope="databricks1",key="kvtenantid")
+appid = dbutils.secrets.get(scope="databricks1",key="kvappid")
+
+spark.conf.set("fs.azure.account.auth.type.cddpsa.dfs.core.windows.net", "OAuth")
+spark.conf.set("fs.azure.account.oauth.provider.type.cddpsa.dfs.core.windows.net", "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider")
+spark.conf.set("fs.azure.account.oauth2.client.id.cddpsa.dfs.core.windows.net", appid)
+spark.conf.set("fs.azure.account.oauth2.client.secret.cddpsa.dfs.core.windows.net", service_credential)
+spark.conf.set("fs.azure.account.oauth2.client.endpoint.cddpsa.dfs.core.windows.net", "https://login.microsoftonline.com/"+tenantid+"/oauth2/token")
+
+
+
+%python
+# Install the fsspec library
+%pip install fsspec
+
+# Read the data from the CSV file and create a Spark DataFrame
+df = (spark.read.option("header", "true").csv("abfss://sales@cddpsa.dfs.core.windows.net/fruits/fruits.csv"))
+display(df)
+
+# Convert the Spark DataFrame to a Pandas DataFrame
+pddf = df.toPandas()
+#pddf.head()
+
+# Drop duplicate rows
+cleandf = pddf.drop_duplicates()
+display(cleandf)
+
+# Convert the cleaned Pandas DataFrame back to a Spark DataFrame
+clean_spark_df = spark.createDataFrame(cleandf)
+
+# Write the cleaned Spark DataFrame back to Azure Blob Storage
+clean_spark_df.coalesce(1).write.mode("overwrite").option("header", "false").csv("abfss://sales@cddpsa.dfs.core.windows.net/fruits/cleanedfruits")
