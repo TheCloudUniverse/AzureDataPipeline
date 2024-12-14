@@ -1,5 +1,4 @@
-#Working code to remove duplicates
-
+# Connect Azure Databricks to Azure Datalake Storage
 service_credential = dbutils.secrets.get(scope="databricks1",key="kvappsecret")
 tenantid = dbutils.secrets.get(scope="databricks1",key="kvtenantid")
 appid = dbutils.secrets.get(scope="databricks1",key="kvappid")
@@ -10,8 +9,7 @@ spark.conf.set("fs.azure.account.oauth2.client.id.cddpsa.dfs.core.windows.net", 
 spark.conf.set("fs.azure.account.oauth2.client.secret.cddpsa.dfs.core.windows.net", service_credential)
 spark.conf.set("fs.azure.account.oauth2.client.endpoint.cddpsa.dfs.core.windows.net", "https://login.microsoftonline.com/"+tenantid+"/oauth2/token")
 
-
-
+# Python code for removing duplicate items from csv file and strore resultant data onto Azure datalake
 %python
 # Install the fsspec library
 %pip install fsspec
@@ -22,7 +20,6 @@ display(df)
 
 # Convert the Spark DataFrame to a Pandas DataFrame
 pddf = df.toPandas()
-#pddf.head()
 
 # Drop duplicate rows
 cleandf = pddf.drop_duplicates()
